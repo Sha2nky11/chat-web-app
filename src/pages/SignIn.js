@@ -16,9 +16,9 @@ const SignIn = () => {
                     time : firebase.database.ServerValue.TIMESTAMP
                 })
             }
-            Alert.success("Signed In",400);
+            Alert.success("Signed In",4000);
         } catch(err) {
-            Alert.error(err.message,400);
+            Alert.error(err.message,4000);
         }
        
     }
