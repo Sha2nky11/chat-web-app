@@ -4,6 +4,8 @@ import AvatarEditor from 'react-avatar-editor'
 import { useModalState } from '../../misc/custom-hooks';
 import { database, storage } from '../../misc/firebase';
 import { useProfile } from '../../context/profile.context';
+import ProfileAvatar from '../ProfileAvatar';
+import '../../styles/main.scss'
 
 
 const AvatarUploadBtn = () => {
@@ -11,7 +13,7 @@ const AvatarUploadBtn = () => {
     const fileInputTypes = '.png, .jpeg, .jpg';
     const acceptedFilesTypes = ['image/png','image/jpeg','image/jpg'];
     const isValidType = (files) => {return acceptedFilesTypes.includes(files.type);}
-    const [input,setInput] = useState(null);
+    const [img,setImg] = useState(null);
     const [isLoading,setisLoading] = useState(false);
     const {profile} = useProfile();
     const {open,close,isOpen} = useModalState();
@@ -36,7 +38,7 @@ const AvatarUploadBtn = () => {
             const file = curFiles[0];
 
             if(isValidType(file)){
-                setInput(file);
+                setImg(file);
                 open();
             }
             else {
@@ -70,6 +72,7 @@ const AvatarUploadBtn = () => {
 
     return (
         <div  className="mt-3 text-center">
+            <ProfileAvatar src = {profile.avatar} name = {profile.name} className="width-200 height-200 font-huge img-fullsize"/>
             <label htmlFor = "avatar-upload" className="d-block cursor-pointer padded">   
                 Select an Avatar
                 <input  id = "avatar-upload" type="file" className="d-none" accept={fileInputTypes} onChange={onFileInputChange}/>
@@ -80,9 +83,9 @@ const AvatarUploadBtn = () => {
                 </Modal.Header>
                 <Modal.Body>
                 <div className='d-flex justify-content-center align-items-center h-100'>
-                {input&& <AvatarEditor
+                {img && <AvatarEditor
                     ref={avatarEditorRef}
-                    image={input}
+                    image={img}
                     width={200}
                     height={200}
                     border={10}
