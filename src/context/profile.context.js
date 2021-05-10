@@ -13,11 +13,11 @@ export const ProfileProvider = ({children}) => {
         let userRef ;
        const authUnSub = auth.onAuthStateChanged(authObj => {
             if (authObj) {
-                console.log(authObj);
+                
                 userRef = database.ref(`/profiles/${authObj.uid}`);
                 userRef.on('value',(snap) => {
                 const {name,createdAt,avatar} = snap.val();
-                
+                console.log('snap' ,snap.val());
                 const data = {
                     name,
                     createdAt,
@@ -26,6 +26,7 @@ export const ProfileProvider = ({children}) => {
                     email : authObj.email
                 }
                 setProfile(data);
+                console.log(data);
                 setIsLoading(false);
              });
 
