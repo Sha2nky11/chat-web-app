@@ -42,7 +42,7 @@ const Bottom = () => {
 
         updates[`/messages/${messageId}`] = msgData;
         updates[`/rooms/${chatId}/lastMessage`] = {
-            msgData,
+            ...msgData,
             msgId : messageId
         }
 
