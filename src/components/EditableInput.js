@@ -20,6 +20,7 @@ const EditAbleInput = ({initialValue,onSave,label,placeholder ='Write your value
         const trimmed = input.trim();
         if(trimmed === ''){
             Alert.info(emptyMsg,5000);
+            return;
         }
 
         if(trimmed !== initialValue){
