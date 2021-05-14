@@ -2,6 +2,7 @@ import React, { memo } from 'react'
 import { Button } from 'rsuite';
 import TimeAgo from 'timeago-react';
 import { useCurrentRoom } from '../../../context/current-room.context';
+import { useHover } from '../../../misc/custom-hooks';
 import { auth } from '../../../misc/firebase';
 import Presence from '../../Presence';
 import ProfileAvatar from '../../ProfileAvatar';
@@ -17,10 +18,12 @@ const MessageItems = ({message,handleAdmin}) => {
     const isAuthor = auth.currentUser.uid === author.uid;
     const canGrantAdmin = isAdmin && !isAuthor;
 
+    const [selfRef,isHover] = useHover();
+
 
     return (
         
-        <div className="padded mb=1">
+        <li className={`padded mb=1 cursor-poointer ${isHover ? 'bg-black-02' : ''} `} ref={selfRef} >
             <div className="d-flex align-items-center font-bolder mb-1"> 
                 <Presence uid = {author.uid}/>
                 <ProfileAvatar src = {author.avatar} name = {author.name} className="ml-1" size= "xs" />
@@ -36,7 +39,7 @@ const MessageItems = ({message,handleAdmin}) => {
             <div>
                 <span className ="word-breal-all"> {text}</span>
             </div>
-        </div>
+        </li>
     )
 }
 
