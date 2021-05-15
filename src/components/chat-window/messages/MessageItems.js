@@ -2,7 +2,7 @@ import React, { memo } from 'react'
 import { Button } from 'rsuite';
 import TimeAgo from 'timeago-react';
 import { useCurrentRoom } from '../../../context/current-room.context';
-import { useHover } from '../../../misc/custom-hooks';
+import { useHover, useMediaQuery } from '../../../misc/custom-hooks';
 import { auth } from '../../../misc/firebase';
 import Presence from '../../Presence';
 import ProfileAvatar from '../../ProfileAvatar';
@@ -10,16 +10,20 @@ import IconBtnControl from './IconBtnControl';
 import ProfileInfoBtnModal from './ProfileInfoBtnModal';
 
 
-const MessageItems = ({message,handleAdmin}) => {
+const MessageItems = ({message,handleAdmin,handleLike,handleDelete}) => {
 
-    const {author,createdAt,text} = message;
+    const {author,createdAt,text,likes,likeCount} = message;
     const isAdmin = useCurrentRoom(v => {return v.isAdmin});
     const admins  = useCurrentRoom(v => {return v.admins});
     const isMsgAuthorAdmin = admins.includes(author.uid);
     const isAuthor = auth.currentUser.uid === author.uid;
     const canGrantAdmin = isAdmin && !isAuthor;
 
+    const isLiked = likes && Object.keys(likes).includes(auth.currentUser.uid)
+
+    const isMobile = useMediaQuery(('(max-width:992px)'));
     const [selfRef,isHover] = useHover();
+    const canShowIcons  = isMobile || isHover;
 
 
     return (
@@ -38,13 +42,20 @@ const MessageItems = ({message,handleAdmin}) => {
                 <TimeAgo  datetime={createdAt}  className="font-norml text-black-45 ml-2" />
                 <IconBtnControl
                     // eslint-disable-next-line no-constant-condition
-                    {...(true ? {color:"red"} : {})}
-                    isVisible
+                    {...(isLiked ? {color:"red"} : {})}
+                    isVisible = {canShowIcons}
                     iconName = "heart"
                     toolTip = "Like this message"
-                    onClick ={() =>{}}
-                    badgeContent = {6}
+                    onClick ={() => {return handleLike(message.id)}}
+                    badgeContent = {likeCount}
                 />
+                {isAuthor &&  <IconBtnControl
+                                isVisible = {canShowIcons}
+                                iconName = "close"
+                                toolTip = "delete this message"
+                                onClick ={() => {return handleDelete(message.id)}}
+                              />
+                }
             </div>
             <div>
                 <span className ="word-breal-all"> {text}</span>
