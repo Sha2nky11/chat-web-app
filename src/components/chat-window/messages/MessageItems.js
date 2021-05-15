@@ -7,12 +7,24 @@ import { auth } from '../../../misc/firebase';
 import Presence from '../../Presence';
 import ProfileAvatar from '../../ProfileAvatar';
 import IconBtnControl from './IconBtnControl';
+import ImgBtnModal from './ImgBtnModal';
 import ProfileInfoBtnModal from './ProfileInfoBtnModal';
 
+const renderFileMessage = (file) => {
+    
+    if(file.contentType.includes('image')) {
+
+        return <div className="height-200"> 
+            <ImgBtnModal src={file.url} fileName={file.name} />
+        </div>
+    }
+
+    return <a href={file.url}> Download {file.name} </a>
+} 
 
 const MessageItems = ({message,handleAdmin,handleLike,handleDelete}) => {
 
-    const {author,createdAt,text,likes,likeCount} = message;
+    const {author,createdAt,text,file,likes,likeCount} = message;
     const isAdmin = useCurrentRoom(v => {return v.isAdmin});
     const admins  = useCurrentRoom(v => {return v.admins});
     const isMsgAuthorAdmin = admins.includes(author.uid);
@@ -24,7 +36,6 @@ const MessageItems = ({message,handleAdmin,handleLike,handleDelete}) => {
     const isMobile = useMediaQuery(('(max-width:992px)'));
     const [selfRef,isHover] = useHover();
     const canShowIcons  = isMobile || isHover;
-
 
     return (
         
@@ -58,7 +69,9 @@ const MessageItems = ({message,handleAdmin,handleLike,handleDelete}) => {
                 }
             </div>
             <div>
-                <span className ="word-breal-all"> {text}</span>
+                {text && <span className ="word-breal-all"> {text}</span>}
+                
+                { file && renderFileMessage(file)}
             </div>
         </li>
     )

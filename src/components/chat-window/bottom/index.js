@@ -23,7 +23,7 @@ function assembleMessage(profile,chatId) {
 
 const Bottom = () => {
 
-    const [input,setInput] = useState('');
+    const [input,setInput] = useState(' ');
     const {chatId} = useParams();
     const {profile} = useProfile();
     const [isloading,setIsLoading] = useState(false);
@@ -74,10 +74,12 @@ const Bottom = () => {
             files.forEach(async file => {
                 const msgData = assembleMessage(profile,chatId); 
                 msgData.file = file;
-                const messageId = database.ref('messages').push().key;
+                const messageId = database.ref('messages').push().key
                 updates[`/messages/${messageId}`] = msgData;
+                
             });
             const lastMsgId = Object.keys(updates).pop();
+            
             updates[`/rooms/${chatId}/lastMessage`] = {
                 ...updates[lastMsgId],
                 msgId : lastMsgId
