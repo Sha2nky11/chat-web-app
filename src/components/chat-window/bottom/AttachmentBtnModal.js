@@ -7,7 +7,7 @@ import { storage } from '../../../misc/firebase';
 
 const MAX_FILES_SIZE = 1000 * 1024 * 5 ;
 
-const AttachMentBtnModal = ({afterUpoad}) => {
+const AttachMentBtnModal = ({afterUpload}) => {
 
     const {isOpen,open,close} = useModalState();
     const [filesList, setFilesList] = useState([]);
@@ -23,8 +23,8 @@ const AttachMentBtnModal = ({afterUpoad}) => {
         try {
             const uploadPromises = filesList.map((f) => {
                 return storage.ref(`/chat/${chatId}`)
-                .child(Date.now() , f.name)
-                .put(f.blobFile ,{ cacheControl : `public ,max-age = ${3600*24*3}`}) ;
+                .child(Date.now() + f.name)
+                .put(f.blobFile ,{ cacheControl : `public,max-age = ${3600*24*3}`,}) ;
             })
 
             const uploadSnapshots = Promise.all(uploadPromises);
@@ -38,7 +38,8 @@ const AttachMentBtnModal = ({afterUpoad}) => {
             })
 
             const files = await Promise.all(shapePromises);
-            await afterUpoad(files);
+            console.log(files);
+            await afterUpload(files);
             setIsLoading(false);
             close();
 

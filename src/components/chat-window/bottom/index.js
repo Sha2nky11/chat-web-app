@@ -40,7 +40,7 @@ const Bottom = () => {
        msgData.text = input;
 
         const updates = {}
-        const messageId = (await database.ref('messages').push()).key
+        const messageId = database.ref('messages').push().key
 
         updates[`/messages/${messageId}`] = msgData;
         updates[`/rooms/${chatId}/lastMessage`] = {
@@ -66,10 +66,37 @@ const Bottom = () => {
         }
     }
 
+    const afterUpload = useCallback( async (files) => {
+            setIsLoading(true);
+
+            const updates = {};
+
+            files.forEach(async file => {
+                const msgData = assembleMessage(profile,chatId); 
+                msgData.file = file;
+                const messageId = database.ref('messages').push().key;
+                updates[`/messages/${messageId}`] = msgData;
+            });
+            const lastMsgId = Object.keys(updates).pop();
+            updates[`/rooms/${chatId}/lastMessage`] = {
+                ...updates[lastMsgId],
+                msgId : lastMsgId
+            };
+            setIsLoading(true); 
+            try {
+                await database.ref().update(updates);
+                setIsLoading(false);
+            } catch (error) {
+                setIsLoading(false);
+                Alert.info(error.message,5000);
+            }
+        },[chatId,profile]); 
+    
+
     return (
         <div>
            <InputGroup>
-            <AttachmentBtnModal/>
+            <AttachmentBtnModal afterUpload= {afterUpload}/>
              <Input
                  placeholder="Write a mesage here . . . . . ." 
                  value={input} onChange={onInputChange} 
