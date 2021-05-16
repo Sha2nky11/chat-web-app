@@ -1,29 +1,71 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router';
-import { Alert } from 'rsuite';
+import { Alert, Button } from 'rsuite';
 import {auth, database, storage} from '../../../misc/firebase'
 import { groupBy, transformToArrWithId } from '../../../misc/helpers';
 import MessageItems from './MessageItems';
 
+const PAGE_SIZE = 15;
+const messageRef = database.ref('/messages');
+
+function shouldScrollToBottom(node ,thresold = 30) {
+    const percentage = (100 * node.scrollTop) / (node.scrollHeight - node.clientHeight) || 0
+
+    return percentage > thresold;
+}
+
 const Messages = () => {
 
     const {chatId} = useParams();
-    const [message , setMessage] = useState(null);
-    const chatIsEmpty = message && message.length === 0;
-    const canShowMessages = message && message.length > 0;
- 
-    useEffect(() =>{
-        const messageRef = database.ref('/messages');
-        messageRef.orderByChild('roomId').equalTo(chatId).on('value' , snap => {
+    const [messages , setMessages] = useState(null);
+    const [limit,setLimit] = useState(PAGE_SIZE);
+    const chatIsEmpty = messages && messages.length === 0;
+    const canShowMessages = messages && messages.length > 0;
+    const selfRef = useRef(); 
+
+    const loadMessages = useCallback( (limitToLast) => {
+        const node = selfRef.current;
+        messageRef.off();
+        messageRef.orderByChild('roomId').equalTo(chatId).limitToLast(limitToLast || PAGE_SIZE).on('value' , snap => {
             const data = transformToArrWithId(snap.val());
-            setMessage(data);
+            setMessages(data);
+
+            if(shouldScrollToBottom(node)){
+                node.scrollTop = node.scrollHeight;
+            }
         });
+        setLimit(p => {return p + PAGE_SIZE})
+        },[chatId])
+ 
+    const loadMoreMessages = useCallback(() => {
+
+        const node = selfRef.current;
+        const oldHeight = node.scrollHeight;
+
+        loadMessages(limit);
+
+        setTimeout(() => {
+            const newHeight = node.scrollHeight;
+            node.scrollTop = newHeight - oldHeight;
+        }, 3000);
+
+    },[loadMessages,limit])   
+        
+    useEffect(() =>{
+
+        const node = selfRef.current;
+
+        loadMessages();
+        
+        setTimeout(() => {
+            node.scrollTop = node.scrollHeight;
+        },2000);
 
         return () => {
             messageRef.off('value');
         }
 
-    },[chatId]);
+    },[loadMessages]);
 
     const handleAdmin =  useCallback(async (uid) => {
         const adminRef = database.ref(`/rooms/${chatId}/admins`)
@@ -48,11 +90,11 @@ const Messages = () => {
     },[chatId])
 
     const handleLike = useCallback(async (msgId) => {
-        const messageRef = database.ref(`/messages/${msgId}`)
+        const messagesRef = database.ref(`/messages/${msgId}`)
         const {uid } = auth.currentUser;
         let alertMsg ;
 
-        await messageRef.transaction(msg => {
+        await messagesRef.transaction(msg => {
             if (msg) {
                 if(msg.likes && msg.likes[uid]){
                     msg.likeCount -=  1;
@@ -83,19 +125,19 @@ const Messages = () => {
             return;
         }
 
-        const isLastMessage = message[message.length -1].id === msgId; 
+        const isLastMessage = messages[messages.length -1].id === msgId; 
         const updates = {};
 
         updates[`/messages/${msgId}`] = null;
         
-        if(isLastMessage && message.length > 1 ){
+        if(isLastMessage && messages.length > 1 ){
             updates[`rooms/${chatId}/lastMessage`] = {
-                ...message[message.length - 2],
-                msgId : message[message.length -2].id
+                ...messages[messages.length - 2],
+                msgId : messages[messages.length -2].id
             }
         }
 
-        if(isLastMessage && message.length === 1){
+        if(isLastMessage && messages.length === 1){
             updates[`rooms/${chatId}/lastMessage`] = null
         }
 
@@ -118,11 +160,11 @@ const Messages = () => {
         }
 
 
-    } , [chatId,message])
+    } , [chatId,messages])
 
     const renderMessages = () => {
 
-        const groups = groupBy(message,(item) => {return new Date(item.createdAt).toDateString() });
+        const groups = groupBy(messages,(item) => {return new Date(item.createdAt).toDateString() });
         const items = []; 
 
         Object.keys(groups).forEach((date) => {
@@ -142,7 +184,15 @@ const Messages = () => {
      }
 
     return (
-        <ul className ="msg-list custom-scroll">
+        <ul ref={selfRef} className ="msg-list custom-scroll">
+            {messages && messages.length >= PAGE_SIZE &&
+             (<li className ="text-center mt-2 mb-2">
+                    <Button onClick={loadMoreMessages}  color="blue">
+                        LoadMore
+                    </Button>    
+                </li>)
+                
+            }
             {chatIsEmpty && <li> No messages yet</li>}
             {canShowMessages && renderMessages()}
         </ul>
